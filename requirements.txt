@@ -1,21 +1,21 @@
 # PyTorch and its dependencies
 # These libraries include PyTorch and its related packages, supporting CUDA 11.8.
 # --extra-index-url https://download.pytorch.org/whl/cu118
-# torch
-# torchvision
-# torchaudio
+torch==2.3.1
+torchvision==0.18.1
+torchaudio==2.3.1
 
 numpy==1.26.3
 transformers==4.39.3
 translators
-edge-tts
+edge-tts>=2.18.0
 gradio
 loguru
 yt-dlp
 scipy
 python-dotenv
 openai
-audiostretchy
+audiostretchy>=0.1.0
 modelscope
 
 # ASR
@@ -26,7 +26,7 @@ funasr
 # googletrans
 
 # Qwen
-accelerate
+accelerate>=0.20.0
 
 # CoxyVoice
 HyperPyYAML==1.2.2
@@ -45,3 +45,19 @@ dotenv
 loguru
 moviepy
 # ctranslate2==3.24.0
+
+# TTS
+edge-tts>=2.18.0
+audiostretchy>=0.1.0
+
+# XTTS
+torch>=2.0.0
+transformers>=4.30.0
+accelerate>=0.20.0
+
+# CozyVoice
+numpy>=1.24.0
+librosa>=0.10.0
+WeTextProcessing>=1.0.3
+wget>=3.2
+HyperPyYAML>=1.2.2

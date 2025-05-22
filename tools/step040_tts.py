@@ -15,10 +15,10 @@ from .cn_tx import TextNorm
 from audiostretchy.stretch import stretch_audio
 normalizer = TextNorm()
 def preprocess_text(text):
-    text = text.replace('AI', '人工智能')
+    text = text.replace('AI', 'artificial intelligence')
     text = re.sub(r'(?<!^)([A-Z])', r' \1', text)
     text = normalizer(text)
-    # 使用正则表达式在字母和数字之间插入空格
+    # Use regex to insert spaces between letters and numbers
     text = re.sub(r'(?<=[a-zA-Z])(?=\d)|(?<=\d)(?=[a-zA-Z])', ' ', text)
     return text
     
@@ -45,15 +45,15 @@ def adjust_audio_length(wav_path, desired_length, sample_rate = 24000, min_speed
 
 tts_support_languages = {
     # XTTS-v2 supports 17 languages: English (en), Spanish (es), French (fr), German (de), Italian (it), Portuguese (pt), Polish (pl), Turkish (tr), Russian (ru), Dutch (nl), Czech (cs), Arabic (ar), Chinese (zh-cn), Japanese (ja), Hungarian (hu), Korean (ko) Hindi (hi).
-    'xtts': ['中文', 'English', 'Japanese', 'Korean', 'French', 'Polish', 'Spanish'],
+    'xtts': ['Chinese', 'English', 'Japanese', 'Korean', 'French', 'Polish', 'Spanish', 'Dutch'],
     'bytedance': [],
     'GPTSoVits': [],
-    'EdgeTTS': ['中文', 'English', 'Japanese', 'Korean', 'French', 'Polish', 'Spanish'],
+    'EdgeTTS': ['Chinese', 'English', 'Japanese', 'Korean', 'French', 'Polish', 'Spanish', 'Dutch'],
     # zero_shot usage, <|zh|><|en|><|jp|><|yue|><|ko|> for Chinese/English/Japanese/Cantonese/Korean
-    'cosyvoice': ['中文', '粤语', 'English', 'Japanese', 'Korean', 'French'], 
+    'cosyvoice': ['Chinese', 'Cantonese', 'English', 'Japanese', 'Korean', 'French'], 
 }
 
-def generate_wavs(method, folder, target_language='中文', voice = 'zh-CN-XiaoxiaoNeural'):
+def generate_wavs(method, folder, target_language='English', voice = 'en-US-JennyNeural'):
     assert method in ['xtts', 'bytedance', 'cosyvoice', 'EdgeTTS']
     transcript_path = os.path.join(folder, 'translation.json')
     output_folder = os.path.join(folder, 'wavs')
@@ -117,11 +117,11 @@ def generate_wavs(method, folder, target_language='中文', voice = 'zh-CN-Xiaox
     len_instruments_wav = len(instruments_wav)
     
     if len_full_wav > len_instruments_wav:
-        # 如果 full_wav 更长，将 instruments_wav 延伸到相同长度
+        # If full_wav is longer, extend instruments_wav to the same length
         instruments_wav = np.pad(
             instruments_wav, (0, len_full_wav - len_instruments_wav), mode='constant')
     elif len_instruments_wav > len_full_wav:
-        # 如果 instruments_wav 更长，将 full_wav 延伸到相同长度
+        # If instruments_wav is longer, extend full_wav to the same length
         full_wav = np.pad(
             full_wav, (0, len_instruments_wav - len_full_wav), mode='constant')
     combined_wav = full_wav + instruments_wav
@@ -130,7 +130,7 @@ def generate_wavs(method, folder, target_language='中文', voice = 'zh-CN-Xiaox
     logger.info(f'Generated {os.path.join(folder, "audio_combined.wav")}')
     return os.path.join(folder, 'audio_combined.wav'), os.path.join(folder, 'audio.wav')
 
-def generate_all_wavs_under_folder(root_folder, method, target_language='中文', voice = 'zh-CN-XiaoxiaoNeural'):
+def generate_all_wavs_under_folder(root_folder, method, target_language='English', voice = 'en-US-JennyNeural'):
     wav_combined, wav_ori = None, None
     for root, dirs, files in os.walk(root_folder):
         if 'translation.json' in files and 'audio_combined.wav' not in files:
@@ -141,5 +141,5 @@ def generate_all_wavs_under_folder(root_folder, method, target_language='中文'
     return f'Generated all wavs under {root_folder}', wav_combined, wav_ori
 
 if __name__ == '__main__':
-    folder = r'videos/村长台钓加拿大/20240805 英文无字幕 阿里这小子在水城威尼斯发来问候'
+    folder = r'videos/example/sample_video'
     generate_wavs('xtts', folder)

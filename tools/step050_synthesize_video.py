@@ -12,10 +12,16 @@ from loguru import logger
 
 
 def split_text(input_data,
-               punctuations=['，', '；', '：', '。', '？', '！', '\n', '”']):
-    # Chinese punctuation marks for sentence ending
+               punctuations=['，', '；', '：', '。', '？', '！', '\n', '"']):
+    """
+    Split text into sentences based on punctuation marks
+    
+    Parameters:
+        input_data: List of input text segments
+        punctuations: List of punctuation marks to split on
+    """
 
-    # Function to check if a character is a Chinese ending punctuation
+    # Function to check if a character is a punctuation mark
     def is_punctuation(char):
         return char in punctuations
 
@@ -94,7 +100,7 @@ def convert_resolution(aspect_ratio, resolution='1080p'):
     else:
         height = int(resolution[:-1])
         width = int(height * aspect_ratio)
-    # make sure width and height are divisibal by 2
+    # make sure width and height are divisible by 2
     width = width - width % 2
     height = height - height % 2
     
@@ -191,7 +197,7 @@ def synthesize_video(folder, subtitles=True, speed_up=1.00, fps=30, resolution='
         os.remove(final_video)
         os.rename(final_video_with_bgm, final_video)
         time.sleep(1)
-    # 字幕无所谓，所以直接try catch就好
+    # Subtitles are not critical, so we can use try-catch
     try:
         if subtitles:
             final_video_with_subtitles = final_video.replace('.mp4', '_subtitles.mp4')
@@ -204,31 +210,27 @@ def synthesize_video(folder, subtitles=True, speed_up=1.00, fps=30, resolution='
     except Exception as e:
         logger.info(f"An error occurred: {e}")
         traceback.format_exc()
-
-    return final_video
-
-
 def add_subtitles(video_path, srt_path, output_path, subtitle_filter=None, method='ffmpeg'):
-    """
-    给视频文件添加字幕。
+    """Add subtitles to a video file.
 
-    参数：
-        video_path (str): 输入视频文件的路径。
-        srt_path (str): .srt 字幕文件的路径。
-        output_path (str): 输出视频文件的路径。
-        subtitle_filter (str): 自定义字幕过滤器，默认为None，使用标准filter。
-        method (str): 使用的方法 ('moviepy' 或 'ffmpeg')，默认为 'ffmpeg'。
+    Parameters:
+        video_path (str): Path to the input video file.
+        srt_path (str): Path to the .srt subtitle file.
+        output_path (str): Path to the output video file.
+        subtitle_filter (str): Custom subtitle filter, defaults to None, using standard filter.
+        method (str): Method to use ('moviepy' or 'ffmpeg'), defaults to 'ffmpeg'.
 
-    返回：
-        bool: 成功返回 True，失败返回 False。
+    Returns:
+        bool: True if successful, False if failed.
     """
     try:
-        # 确保temp目录存在
+        # Ensure the temp directory exists
         temp_dir = "temp"
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
 
-        # 生成随机字符串作为临时文件名
+        # Generate a random string as the temporary file name
+        # Generate random string as temporary filename
         random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
         temp_video_path = os.path.join(temp_dir, f"temp_video_{random_string}.mp4")
 
@@ -238,71 +240,71 @@ def add_subtitles(video_path, srt_path, output_path, subtitle_filter=None, metho
         random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
         temp_output_path = os.path.join(temp_dir, f"temp_output_{random_string}.mp4")
 
-        # 检查源文件是否存在
+        # Check if source files exist
         if not os.path.exists(video_path):
-            logger.error(f"输入视频文件不存在: {video_path}")
+            logger.error(f"Input video file does not exist: {video_path}")
             return False
 
         if not os.path.exists(srt_path):
-            logger.error(f"字幕文件不存在: {srt_path}")
+            logger.error(f"Subtitle file does not exist: {srt_path}")
             return False
 
-        # 确保输出目录存在
+        # Ensure output directory exists
         output_dir = os.path.dirname(output_path)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        # 开始复制原始文件到临时文件
+        # Start copying original files to temporary files
         shutil.copyfile(video_path, temp_video_path)
         shutil.copyfile(srt_path, temp_srt_path)
 
-        # 使用绝对路径避免路径问题
+        # Use absolute paths to avoid path issues
         temp_video_path = os.path.abspath(temp_video_path)
         temp_srt_path = os.path.abspath(temp_srt_path)
         temp_output_path = os.path.abspath(temp_output_path)
-        # 开始检查确认字幕文件是否存在
+        # Start checking if subtitle file exists
         if not os.path.exists(temp_srt_path):
-            logger.error(f"字幕文件不存在: {temp_srt_path}")
+            logger.error(f"Subtitle file does not exist: {temp_srt_path}")
             return False
-        # 开始检查确认视频文件是否存在
+        # Start checking if video file exists
         if not os.path.exists(temp_video_path):
-            logger.error(f"输入视频文件不存在: {temp_video_path}")
+            logger.error(f"Input video file does not exist: {temp_video_path}")
             return False
 
         if method == 'moviepy':
             from moviepy import VideoFileClip, TextClip, CompositeVideoClip
             from moviepy.video.tools.subtitles import SubtitlesClip
 
-            # 使用 moviepy 添加字幕
+            # Use moviepy to add subtitles
             video = VideoFileClip(temp_video_path)
             generator = lambda txt: TextClip(txt, font='font/SimHei.ttf', fontsize=24, color='white')
             subtitles = SubtitlesClip(temp_srt_path, generator)
             final_video = video.copy()
 
             final_video = final_video.set_subtitles(subtitles)
-            # 保存视频
+            # Save video
             final_video.write_videofile(temp_output_path, fps=video.fps)
 
-            # 复制回原始位置
+            # Copy back to original location
             if os.path.exists(temp_output_path):
                 shutil.copyfile(temp_output_path, output_path)
-                logger.info(f"字幕添加成功，输出到: {output_path}")
+                logger.info(f"Subtitles added successfully, output to: {output_path}")
                 return True
             else:
-                logger.error(f"输出文件未生成: {temp_output_path}")
+                logger.error(f"Output file not generated: {temp_output_path}")
                 return False
 
         elif method == 'ffmpeg':
-            # 使用 ffmpeg 添加字幕
+            # Use ffmpeg to add subtitles
             try:
-                # 获取字体文件的绝对路径
+                # Get absolute path to font file
                 font_dir = os.path.abspath("./font")
 
-                # 构建字幕过滤器，使用文件名引用
+                # Build subtitle filter, using filename reference
                 style = "FontName=SimHei,FontSize=15,PrimaryColour=&HFFFFFF,OutlineColour=&H000000,Outline=2,WrapStyle=2"
                 filter_option = f"subtitles={temp_srt_path}:force_style='{style}'"
 
-                # 构建命令
+                # Build command
                 command = [
                     'ffmpeg',
                     '-i', f"{temp_video_path}",
@@ -313,46 +315,46 @@ def add_subtitles(video_path, srt_path, output_path, subtitle_filter=None, metho
                     '-threads', '2',
                 ]
 
-                logger.info(f"执行FFmpeg命令: {' '.join(command)}")
+                logger.info(f"Executing FFmpeg command: {' '.join(command)}")
 
-                # 执行命令
+                # Execute command
                 result = subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stderr_output = result.stderr.decode('utf-8', errors='ignore')
-                logger.debug(f"FFmpeg输出: {stderr_output}")
+                logger.debug(f"FFmpeg output: {stderr_output}")
 
-                # 检查是否成功生成输出文件
+                # Check if output file was successfully generated
                 if os.path.exists(temp_output_path):
-                    # 确保输出目录存在
+                    # Ensure output directory exists
                     os.makedirs(os.path.dirname(output_path), exist_ok=True)
                     shutil.copyfile(temp_output_path, output_path)
-                    logger.info(f"字幕添加成功，输出到: {output_path}")
+                    logger.info(f"Subtitles added successfully, output to: {output_path}")
                     return True
                 else:
-                    logger.error(f"FFmpeg执行成功但输出文件未生成: {temp_output_path}")
+                    logger.error(f"FFmpeg executed successfully but output file not generated: {temp_output_path}")
                     return False
 
             except subprocess.CalledProcessError as e:
-                logger.error(f"FFmpeg命令执行失败: {e}")
+                logger.error(f"FFmpeg command execution failed: {e}")
                 stderr_output = e.stderr.decode('utf-8', errors='ignore') if e.stderr else "No stderr output"
-                logger.error(f"FFmpeg错误输出: {stderr_output}")
+                logger.error(f"FFmpeg error output: {stderr_output}")
                 return False
 
             except Exception as e:
-                logger.error(f"添加字幕时发生错误: {str(e)}")
+                logger.error(f"Error adding subtitles: {str(e)}")
                 import traceback
-                logger.error(f"错误堆栈: {traceback.format_exc()}")
+                logger.error(f"Error stack: {traceback.format_exc()}")
                 return False
         else:
-            logger.error(f"不支持的方法: {method}. 请使用 'moviepy' 或 'ffmpeg'")
+            logger.error(f"Unsupported method: {method}. Please use 'moviepy' or 'ffmpeg'")
             return False
 
     except Exception as e:
-        logger.error(f"添加字幕时发生错误: {str(e)}")
+        logger.error(f"Error adding subtitles: {str(e)}")
         import traceback
-        logger.debug(f"错误详情: {traceback.format_exc()}")
+        logger.debug(f"Error details: {traceback.format_exc()}")
         return False
     finally:
-        # 清理临时文件
+        # Clean up temporary files
         temp_files = [temp_video_path, temp_srt_path, temp_output_path]
         if method == 'ffmpeg':
             temp_files.append(os.path.join(temp_dir, "subtitles.srt"))
@@ -362,7 +364,7 @@ def add_subtitles(video_path, srt_path, output_path, subtitle_filter=None, metho
                 try:
                     os.remove(temp_file)
                 except Exception as e:
-                    logger.debug(f"无法删除临时文件 {temp_file}: {e}")
+                    logger.debug(f"Unable to delete temporary file {temp_file}: {e}")
 
 def synthesize_all_video_under_folder(folder, subtitles=True, speed_up=1.00, fps=30, background_music=None, bgm_volume=0.5, video_volume=1.0, resolution='1080p', watermark_path="f_logo.png"):
     watermark_path = None if not os.path.exists(watermark_path) else watermark_path
@@ -384,9 +386,13 @@ def synthesize_all_video_under_folder(folder, subtitles=True, speed_up=1.00, fps
     return f'Synthesized all videos under {folder}', output_video
 
 if __name__ == '__main__':
-    folder = r"videos/村长台钓加拿大/20240805 英文无字幕 阿里这小子在水城威尼斯发来问候"
+    folder = r"videos/example_video"
     synthesize_all_video_under_folder(folder, 
                                       subtitles=True, 
-                                      background_music = 'examples/bk_music.mp3', 
-                                      watermark_path='docs/linly_watermark.png'
-                                      )
+                                      speed_up=1.00, 
+                                      fps=30, 
+                                      background_music=None, 
+                                      bgm_volume=0.5, 
+                                      video_volume=1.0, 
+                                      resolution='1080p', 
+                                      watermark_path="f_logo.png")

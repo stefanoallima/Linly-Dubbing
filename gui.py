@@ -3,13 +3,13 @@ import os
 from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget
 from PySide6.QtCore import Qt
 
-# 请确保导入正确模块
+# Please ensure correct module imports
 try:
-    # 导入自定义控件文件
+    # Import custom UI components
     from ui_components import (CustomSlider, FloatSlider, RadioButtonGroup,
                                AudioSelector, VideoPlayer)
 
-    # 导入各个功能标签页
+    # Import feature tabs
     from tabs.full_auto_tab import FullAutoTab
     from tabs.settings_tab import SettingsTab
     from tabs.download_tab import DownloadTab
@@ -20,7 +20,7 @@ try:
     from tabs.video_tab import SynthesizeVideoTab
     from tabs.linly_talker_tab import LinlyTalkerTab
 
-    # 尝试导入实际的功能模块
+    # Try to import actual functionality modules
     try:
         from tools.step000_video_downloader import download_from_url
         from tools.step010_demucs_vr import separate_all_audio_under_folder
@@ -31,13 +31,13 @@ try:
         from tools.do_everything import do_everything
         from tools.utils import SUPPORT_VOICE
     except ImportError as e:
-        print(f"警告: 无法导入一些工具模块: {e}")
-        # 定义临时的支持语音列表
+        print(f"Warning: Failed to import some tool modules: {e}")
+        # Define temporary supported voice list
         SUPPORT_VOICE = ['zh-CN-XiaoxiaoNeural', 'zh-CN-YunxiNeural',
                          'en-US-JennyNeural', 'ja-JP-NanamiNeural']
 
 except ImportError as e:
-    print(f"错误: 初始化应用程序失败: {e}")
+    print(f"Error: Failed to initialize application: {e}")
     sys.exit(1)
 
 
@@ -45,45 +45,45 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("智能视频多语言AI配音/翻译工具 - Linly-Dubbing")
+        self.setWindowTitle("Linly-Dubbing - Intelligent Multi-language AI Dubbing/Translation Tool")
         self.resize(1024, 768)
 
-        # 创建选项卡
+        # Create tab widget
         self.tab_widget = QTabWidget()
 
-        # 创建标签页实例
+        # Create tab instances
         self.full_auto_tab = FullAutoTab()
         self.settings_tab = SettingsTab()
 
-        # 连接配置页面的配置变更信号到一键自动化页面
+        # Connect settings page configuration change signal to one-click automation page
         self.settings_tab.config_changed.connect(self.full_auto_tab.update_config)
 
-        # 添加各个选项卡
-        self.tab_widget.addTab(self.full_auto_tab, "一键自动化 One-Click")
-        self.tab_widget.addTab(self.settings_tab, "配置页面 Settings")
-        self.tab_widget.addTab(DownloadTab(), "自动下载视频")
-        self.tab_widget.addTab(DemucsTab(), "人声分离")
-        self.tab_widget.addTab(ASRTab(), "AI智能语音识别")
-        self.tab_widget.addTab(TranslationTab(), "字幕翻译")
-        self.tab_widget.addTab(TTSTab(), "AI语音合成")
-        self.tab_widget.addTab(SynthesizeVideoTab(), "视频合成")
-        self.tab_widget.addTab(LinlyTalkerTab(), "Linly-Talker 对口型（开发中）")
+        # Add tabs
+        self.tab_widget.addTab(self.full_auto_tab, "One-Click Automation")
+        self.tab_widget.addTab(self.settings_tab, "Settings")
+        self.tab_widget.addTab(DownloadTab(), "Video Download")
+        self.tab_widget.addTab(DemucsTab(), "Voice Separation")
+        self.tab_widget.addTab(ASRTab(), "AI Speech Recognition")
+        self.tab_widget.addTab(TranslationTab(), "Subtitle Translation")
+        self.tab_widget.addTab(TTSTab(), "AI Voice Synthesis")
+        self.tab_widget.addTab(SynthesizeVideoTab(), "Video Synthesis")
+        self.tab_widget.addTab(LinlyTalkerTab(), "Linly-Talker Lip Sync (In Development)")
 
-        # 设置中央窗口部件
+        # Set central widget
         self.setCentralWidget(self.tab_widget)
 
 
 def main():
-    # 设置高DPI缩放
+    # Set high DPI scaling
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     app = QApplication(sys.argv)
 
-    # 设置应用样式
+    # Set application style
     app.setStyle("Fusion")
 
-    # 创建主窗口
+    # Create main window
     window = MainWindow()
     window.show()
 

@@ -56,6 +56,6 @@ def llm_response(messages, device='auto'):
     return ''
 
 if __name__ == '__main__':
-    test_message = [{"role": "user", "content": "你好，介绍一下你自己"}]
+    test_message = [{"role": "user", "content": "Hello, please introduce yourself"}]
     response = llm_response(test_message)
     print(response)

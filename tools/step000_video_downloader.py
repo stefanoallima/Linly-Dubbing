@@ -4,9 +4,10 @@ from loguru import logger
 import yt_dlp
 import json
 def sanitize_title(title):
-    # Only keep numbers, letters, Chinese characters, and spaces
+    """
+    Sanitize the title by keeping only numbers, letters, Chinese characters, and spaces
+    """
     title = re.sub(r'[^\w\u4e00-\u9fff \d_-]', '', title)
-    # Replace multiple spaces with a single space
     title = re.sub(r'\s+', ' ', title)
     return title
 
@@ -43,9 +44,9 @@ def download_single_video(info, folder_path, resolution='1080p'):
         'writethumbnail': True,
         'outtmpl': os.path.join(folder_path, sanitized_uploader, f'{upload_date} {sanitized_title}', 'download'),
         'ignoreerrors': True,
-        'cookiefile' : 'cookies.txt' if os.path.exists("cookies.txt") else None, # 得到cookies yt-dlp --cookies-from-browser chrome --cookies cookies.txt
-        # 'cookiesfrombrowser': ('chrome', ), # 从chrome浏览器中获取cookie 
-        # 'cookiesfrombrowser': ('firefox', 'default', None, 'Meta') # 从firefox浏览器中获取cookie
+        'cookiefile' : 'cookies.txt' if os.path.exists("cookies.txt") else None, # Get cookies using yt-dlp --cookies-from-browser chrome --cookies cookies.txt
+        # 'cookiesfrombrowser': ('chrome', ), # Get cookies from Chrome browser
+        # 'cookiesfrombrowser': ('firefox', 'default', None, 'Meta') # Get cookies from Firefox browser
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

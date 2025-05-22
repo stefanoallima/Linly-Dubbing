@@ -55,7 +55,7 @@ language_map = {
     'Hindi': 'hi',
     'Korean': 'ko',
 }
-def tts(text, output_path, speaker_wav, model_name="models/TTS/XTTS-v2", device='auto', target_language='中文'):
+def tts(text, output_path, speaker_wav, model_name="models/TTS/XTTS-v2", device='auto', target_language='English'):
     global model
     language = language_map[target_language]
     assert language in ['ar', 'pt', 'zh-cn', 'cs', 'nl', 'en', 'fr', 'de', 'it', 'pl', 'ru', 'es', 'tr', 'ja', 'ko', 'hu', 'hi']

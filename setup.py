@@ -1,0 +1,29 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="linly-dubbing",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "numpy>=1.26.3",
+        "transformers>=4.39.3",
+        "translators",
+        "edge-tts>=2.18.0",
+        "gradio",
+        "loguru",
+        "yt-dlp",
+        "scipy",
+        "python-dotenv",
+        "openai",
+        "audiostretchy>=0.1.0",
+        "modelscope",
+        "funasr",
+        "accelerate>=0.20.0",
+        "HyperPyYAML>=1.2.2",
+        "librosa>=0.10.2",
+        "WeTextProcessing>=1.0.3",
+        "wget>=3.2",
+        "moviepy",
+    ],
+    python_requires='>=3.8',
+)

@@ -43,7 +43,7 @@ language_map = {
     'Korean': 'ko'
 }
 
-def tts(text, output_path, speaker_wav, model_name="models/TTS/CosyVoice-300M", device='auto', target_language='中文'):
+def tts(text, output_path, speaker_wav, model_name="models/TTS/CosyVoice-300M", device='auto', target_language='English'):
     global model
     
     if os.path.exists(output_path):

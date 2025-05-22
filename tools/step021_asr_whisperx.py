@@ -69,7 +69,7 @@ def load_diarize_model(device='auto'):
     except Exception as e:
         t_end = time.time()
         logger.error(f"Failed to load diarization model in {t_end - t_start:.2f}s due to {str(e)}")
-        logger.info("You have not set the HF_TOKEN, so the pyannote/speaker-diarization-3.1 model could not be downloaded.")
+        logger.info("The HF_TOKEN environment variable is not set, so the pyannote/speaker-diarization-3.1 model could not be downloaded.")
         logger.info("If you need to use the speaker diarization feature, please request access to the pyannote/speaker-diarization-3.1 model. Alternatively, you can choose not to enable this feature.")
 
 def whisperx_transcribe_audio(wav_path, model_name: str = 'large', download_root='models/ASR/whisper', device='auto', batch_size=32, diarization=True,min_speakers=None, max_speakers=None):
@@ -79,7 +79,7 @@ def whisperx_transcribe_audio(wav_path, model_name: str = 'large', download_root
     rec_result = whisper_model.transcribe(wav_path, batch_size=batch_size)
     
     if rec_result['language'] == 'nn':
-        logger.warning(f'No language detected in {wav_path}')
+        logger.warning(f'No language detected in file: {wav_path}')
         return False
     
     load_align_model(rec_result['language'])
@@ -92,7 +92,7 @@ def whisperx_transcribe_audio(wav_path, model_name: str = 'large', download_root
             diarize_segments = diarize_model(wav_path,min_speakers=min_speakers, max_speakers=max_speakers)
             rec_result = whisperx.assign_word_speakers(diarize_segments, rec_result)
         else:
-            logger.warning("Diarization model is not loaded, skipping speaker diarization")
+            logger.warning("Diarization model not loaded, skipping speaker diarization")
         
     transcript = [{'start': segement['start'], 'end': segement['end'], 'text': segement['text'].strip(), 'speaker': segement.get('speaker', 'SPEAKER_00')} for segement in rec_result['segments']]
     return transcript

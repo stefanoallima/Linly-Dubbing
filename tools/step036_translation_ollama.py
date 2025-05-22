@@ -10,14 +10,14 @@ load_dotenv()
 
 def ollama_response(messages, model_name=None):
     """
-    使用Ollama API进行翻译处理
+    Process translation using Ollama API
 
-    参数:
-        messages: 与OpenAI格式兼容的消息列表
-        model_name: Ollama模型名称，如果为None则从环境变量获取
+    Parameters:
+        messages: List of messages in OpenAI-compatible format
+        model_name: Ollama model name, defaults to environment variable if None
 
-    返回:
-        翻译结果文本
+    Returns:
+        Translated text
     """
     model_name = os.getenv('OLLAMA_MODEL', 'qwen2.5:14b')
 
@@ -33,18 +33,18 @@ def ollama_response(messages, model_name=None):
     }
 
     try:
-        logger.info(f"正在使用Ollama模型 {model_name} 进行翻译...")
+        logger.info(f"Translating using Ollama model {model_name}...")
         response = requests.post(url, json=payload, timeout=120)
 
         if response.status_code == 200:
             result = response.json()
             return result.get('message', {}).get('content', '')
         else:
-            logger.error(f"请求Ollama API失败，状态码：{response.status_code}")
-            logger.error(f"错误详情：{response.text}")
-            raise Exception(f"请求Ollama API失败，状态码：{response.status_code}")
+            logger.error(f"Failed to request Ollama API, status code: {response.status_code}")
+            logger.error(f"Error details: {response.text}")
+            raise Exception(f"Failed to request Ollama API, status code: {response.status_code}")
     except Exception as e:
-        logger.error(f"与Ollama通信过程中发生错误: {str(e)}")
+        logger.error(f"Error occurred during Ollama communication: {str(e)}")
         raise
 
 
@@ -98,8 +98,8 @@ def ollama_stream_response(messages, model_name=None):
 
 
 if __name__ == '__main__':
-    # 测试基本翻译功能
-    test_message = [{"role": "user", "content": "你好，介绍一下你自己"}]
+    # Test basic translation functionality
+    test_message = [{"role": "user", "content": "Hello, please introduce yourself"}]
     response = ollama_response(test_message)
     print(f"基本响应:\n{response}\n")
 

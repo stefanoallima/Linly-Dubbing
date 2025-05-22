@@ -9,20 +9,20 @@ access_token = None
 
 def get_access_token(api_key, secret_key):
     """
-    使用 API Key 和 Secret Key 获取access_token。
-    :param api_key: 应用的API Key
-    :param secret_key: 应用的Secret Key
+    Get access_token using API Key and Secret Key.
+    :param api_key: Application API Key
+    :param secret_key: Application Secret Key
     :return: access_token
     """
     url = f"https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id={api_key}&client_secret={secret_key}"
     
     response = requests.post(url, headers={'Content-Type': 'application/json'})
     if response.status_code == 200:
-        logger.info("成功获取 access_token")
+        logger.info("Successfully obtained access_token")
         return response.json().get("access_token")
     else:
-        logger.error("获取 access_token 失败")
-        raise Exception("获取 access_token 失败")
+        logger.error("Failed to obtain access_token")
+        raise Exception("Failed to obtain access_token")
 
 def ernie_response(messages, system=''):
     global access_token
@@ -46,13 +46,13 @@ def ernie_response(messages, system=''):
         response_json = response.json()
         return response_json.get('result')
     else:
-        logger.error(f"请求百度API失败，状态码：{response.status_code}")
-        raise Exception("请求百度API失败")
+        logger.error(f"Request to Baidu API failed, status code: {response.status_code}")
+        raise Exception("Request to Baidu API failed")
 
 if __name__ == '__main__':
-    # test_message = [{"role": "user", "content": "你好，介绍一下你自己"}]
+    # test_message = [{"role": "user", "content": "Hello, introduce yourself"}]
     test_message = [
-        {'role': 'user', 'content': 'The following is the full content of the video:\nTitle: "(英文无字幕) 阿里这小子在水城威尼斯发来问候" Author: "村长台钓加拿大". \nHello guys, how are you? I\'m in Venice now with my partner. We\'re in Venice looking around the amazing streets. I love it. It\'s perfect. Look at that. So nice. I can\'t wait to show you the pizza guys.\nTitle: "(英文无字幕) 阿里这小子在水城威尼斯发来问候" Author: "村长台钓加拿大". \nAccording to the above content, detailedly Summarize the video in JSON format:\n```json\n{"title": "", "summary": ""}\n```'}
+        {'role': 'user', 'content': 'The following is the full content of the video:\nTitle: "(English without subtitles) Ali is in Venice sending greetings" Author: "Village head fishing in Canada". \nHello guys, how are you? I\'m in Venice now with my partner. We\'re in Venice looking around the amazing streets. I love it. It\'s perfect. Look at that. So nice. I can\'t wait to show you the pizza guys.\nTitle: "(English without subtitles) Ali is in Venice sending greetings" Author: "Village head fishing in Canada". \nAccording to the above content, please summarize the video in JSON format:\n```json\n{"title": "", "summary": ""}\n```'}
         ]
-    response = ernie_response(test_message, system='You are a expert in the field of this video. Please summarize the video in JSON format.\n```json\n{"title": "the title of the video", "summary", "the summary of the video"}\n```')
+    response = ernie_response(test_message, system='You are an expert in the field of this video. Please summarize the video in JSON format.\n```json\n{"title": "the title of the video", "summary", "the summary of the video"}\n```')
     print(response)

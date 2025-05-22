@@ -23,6 +23,6 @@ def qwen_response(messages):
     return response.choices[0].message.content
 
 if __name__ == '__main__':
-    test_message = [{"role": "user", "content": "你好，介绍一下你自己"}]
+    test_message = [{"role": "user", "content": "Hello, please introduce yourself"}]
     response = qwen_response(test_message)
     print(response)
