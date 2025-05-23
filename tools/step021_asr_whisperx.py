@@ -69,7 +69,7 @@ def load_diarize_model(device='auto'):
     except Exception as e:
         t_end = time.time()
         logger.error(f"Failed to load diarization model in {t_end - t_start:.2f}s due to {str(e)}")
-        logger.info("The HF_TOKEN environment variable is not set, so the pyannote/speaker-diarization-3.1 model could not be downloaded.")
+        logger.info("You have not set the HF_TOKEN, so the pyannote/speaker-diarization-3.1 model could not be downloaded.")
         logger.info("If you need to use the speaker diarization feature, please request access to the pyannote/speaker-diarization-3.1 model. Alternatively, you can choose not to enable this feature.")
 
 def whisperx_transcribe_audio(wav_path, model_name: str = 'large', download_root='models/ASR/whisper', device='auto', batch_size=32, diarization=True,min_speakers=None, max_speakers=None):

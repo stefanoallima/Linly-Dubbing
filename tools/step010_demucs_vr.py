@@ -1,15 +1,18 @@
 import shutil
-from demucs.api import Separator
+from demucs.pretrained import get_model
+from demucs.audio import save_audio
 import os
 from loguru import logger
 import time
 from .utils import save_wav, normalize_wav
 import torch
 import gc
+import torchaudio
+from pathlib import Path
 
 # Global variables
 auto_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-separator = None
+model = None
 model_loaded = False  # Added flag to track if model is loaded
 current_model_config = {}  # Added variable to store current model configuration
 
@@ -19,23 +22,23 @@ def init_demucs():
     Initialize Demucs model.
     If model is already initialized, return directly without reloading.
     """
-    global separator, model_loaded
+    global model, model_loaded
     if not model_loaded:
-        separator = load_model()
+        model = load_model()
         model_loaded = True
     else:
         logger.info("Demucs model already loaded, skipping initialization")
 
 
 def load_model(model_name: str = "htdemucs_ft", device: str = 'auto', progress: bool = True,
-               shifts: int = 5) -> Separator:
+               shifts: int = 5):
     """
     Load Demucs model.
     If model with same configuration is already loaded, return existing model without reloading.
     """
-    global separator, model_loaded, current_model_config
+    global model, model_loaded, current_model_config
 
-    if separator is not None:
+    if model is not None:
         # Check if model needs to be reloaded (different configuration)
         requested_config = {
             'model_name': model_name,
@@ -45,7 +48,7 @@ def load_model(model_name: str = "htdemucs_ft", device: str = 'auto', progress: 
 
         if current_model_config == requested_config:
             logger.info(f'Demucs model loaded with same configuration, reusing existing model')
-            return separator
+            return model
         else:
             logger.info(f'Demucs model configuration changed, need to reload')
             # Release existing model resources
@@ -55,7 +58,8 @@ def load_model(model_name: str = "htdemucs_ft", device: str = 'auto', progress: 
     t_start = time.time()
 
     device_to_use = auto_device if device == 'auto' else device
-    separator = Separator(model_name, device=device_to_use, progress=progress, shifts=shifts)
+    model = get_model(model_name)
+    model.to(device_to_use)
 
     # Store current model configuration
     current_model_config = {
@@ -68,19 +72,19 @@ def load_model(model_name: str = "htdemucs_ft", device: str = 'auto', progress: 
     t_end = time.time()
     logger.info(f'Demucs model loaded successfully, took {t_end - t_start:.2f} seconds')
 
-    return separator
+    return model
 
 
 def release_model():
     """
     Release model resources to prevent memory leaks
     """
-    global separator, model_loaded, current_model_config
+    global model, model_loaded, current_model_config
 
-    if separator is not None:
+    if model is not None:
         logger.info('Releasing Demucs model resources...')
         # Remove reference
-        separator = None
+        model = None
         # Force garbage collection
         gc.collect()
         if torch.cuda.is_available():
@@ -94,12 +98,13 @@ def release_model():
 def separate_audio(folder: str, model_name: str = "htdemucs_ft", device: str = 'auto', progress: bool = True,
                    shifts: int = 5) -> None:
     """
-    Separate audio file
+    Separate audio file using Demucs
     """
-    global separator
+    global model
     audio_path = os.path.join(folder, 'audio.wav')
     if not os.path.exists(audio_path):
         return None, None
+        
     vocal_output_path = os.path.join(folder, 'audio_vocals.wav')
     instruments_output_path = os.path.join(folder, 'audio_instruments.wav')
 
@@ -110,45 +115,66 @@ def separate_audio(folder: str, model_name: str = "htdemucs_ft", device: str = '
     logger.info(f'Separating audio: {folder}')
 
     try:
-        # 确保模型已加载并且配置正确
+        # Ensure model is loaded with correct configuration
         if not model_loaded or current_model_config.get('model_name') != model_name or \
                 (current_model_config.get('device') == 'auto') != (device == 'auto') or \
                 current_model_config.get('shifts') != shifts:
             load_model(model_name, device, progress, shifts)
 
         t_start = time.time()
-
+        
+        # Load audio
+        wav, sr = torchaudio.load(audio_path)
+        wav = wav.mean(dim=0)  # Convert to mono if stereo
+        
+        # Resample if needed (Demucs expects 44.1kHz)
+        if sr != 44100:
+            wav = torchaudio.functional.resample(wav, sr, 44100)
+            sr = 44100
+            
+        # Move to device and add batch dimension
+        wav = wav.to(auto_device).unsqueeze(0)
+        
         try:
-            origin, separated = separator.separate_audio_file(audio_path)
+            # Run separation
+            with torch.no_grad():
+                separated = model(wav[None])[0]
+                
+            t_end = time.time()
+            logger.info(f'Audio separation completed, took {t_end - t_start:.2f} seconds')
+            
+            # Get vocals and instruments
+            vocals = separated["vocals"].cpu().squeeze().numpy()
+            instruments = (separated["drums"] + separated["bass"] + separated["other"]).cpu().squeeze().numpy()
+            
+            # Save outputs
+            save_wav(vocals, vocal_output_path, sample_rate=44100)
+            logger.info(f'Vocals saved: {vocal_output_path}')
+
+            save_wav(instruments, instruments_output_path, sample_rate=44100)
+            logger.info(f'Instruments saved: {instruments_output_path}')
+            
+            return vocal_output_path, instruments_output_path
+            
         except Exception as e:
             logger.error(f'Audio separation failed: {e}')
             # Try to reload model once when error occurs
             release_model()
             load_model(model_name, device, progress, shifts)
-            logger.info(f'Model reloaded, retrying separation...')
-            origin, separated = separator.separate_audio_file(audio_path)
-
-        t_end = time.time()
-        logger.info(f'Audio separation completed, took {t_end - t_start:.2f} seconds')
-
-        vocals = separated['vocals'].numpy().T
-        instruments = None
-        for k, v in separated.items():
-            if k == 'vocals':
-                continue
-            if instruments is None:
-                instruments = v
-            else:
-                instruments += v
-        instruments = instruments.numpy().T
-
-        save_wav(vocals, vocal_output_path, sample_rate=44100)
-        logger.info(f'Vocals saved: {vocal_output_path}')
-
-        save_wav(instruments, instruments_output_path, sample_rate=44100)
-        logger.info(f'Instruments saved: {instruments_output_path}')
-
-        return vocal_output_path, instruments_output_path
+            logger.info('Model reloaded, retrying separation...')
+            
+            with torch.no_grad():
+                separated = model(wav[None])[0]
+                
+            # Get vocals and instruments
+            vocals = separated["vocals"].cpu().squeeze().numpy()
+            instruments = (separated["drums"] + separated["bass"] + separated["other"]).cpu().squeeze().numpy()
+            
+            # Save outputs
+            save_wav(vocals, vocal_output_path, sample_rate=44100)
+            save_wav(instruments, instruments_output_path, sample_rate=44100)
+            
+            return vocal_output_path, instruments_output_path
 
     except Exception as e:
         logger.error(f'Audio separation failed: {str(e)}')
@@ -183,7 +209,7 @@ def separate_all_audio_under_folder(root_folder: str, model_name: str = "htdemuc
     """
     Separate all audio files under folder
     """
-    global separator
+    global model
     vocal_output_path, instruments_output_path = None, None
 
     try:
@@ -194,7 +220,7 @@ def separate_all_audio_under_folder(root_folder: str, model_name: str = "htdemuc
                 extract_audio_from_video(subdir)
             if 'audio_vocals.wav' not in files:
                 vocal_output_path, instruments_output_path = separate_audio(subdir, model_name, device, progress,
-                                                                            shifts)
+                                                                          shifts)
             elif 'audio_vocals.wav' in files and 'audio_instruments.wav' in files:
                 vocal_output_path = os.path.join(subdir, 'audio_vocals.wav')
                 instruments_output_path = os.path.join(subdir, 'audio_instruments.wav')

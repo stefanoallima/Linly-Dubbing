@@ -1,11 +1,11 @@
 # PyTorch and its dependencies
 # These libraries include PyTorch and its related packages, supporting CUDA 11.8.
-# --extra-index-url https://download.pytorch.org/whl/cu118
-torch==2.3.1
-torchvision==0.18.1
-torchaudio==2.3.1
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==2.3.1+cu121 --index-url https://download.pytorch.org/whl/cu121
+torchvision==0.18.1+cu121
+torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
-numpy==1.26.3
+numpy>=1.26.3
 transformers==4.39.3
 translators
 edge-tts>=2.18.0
@@ -18,9 +18,14 @@ openai
 audiostretchy>=0.1.0
 modelscope
 
+# ASR dependencies
+# Using pre-built wheels to avoid compilation issues
+--only-binary=:all:
+blis>=0.7.0
+
 # ASR
-# git+https://github.com/m-bain/whisperx.git
-# git+https://github.com/facebookresearch/demucs#egg=demucs
+git+https://github.com/m-bain/whisperx.git
+git+https://github.com/facebookresearch/demucs#egg=demucs
 funasr
 
 # googletrans
@@ -59,5 +64,5 @@ accelerate>=0.20.0
 numpy>=1.24.0
 librosa>=0.10.0
 WeTextProcessing>=1.0.3
-wget>=3.2
+requests>=2.31.0
 HyperPyYAML>=1.2.2
